@@ -2,6 +2,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.*;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamReader;
 import java.io.*;
 
 public class XMLParser {
@@ -9,15 +12,17 @@ public class XMLParser {
     public static void main(String[] args) {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            System.out.print("Введите 1 для SAX или 2 для DOM: ");
+            System.out.print("Введите 1 для SAX, 2 для DOM или 3 для StAX: ");
             String choice = reader.readLine();
 
             if (choice.equals("1")) {
                 parseWithSAX("src/sonnet.xml");
             } else if (choice.equals("2")) {
                 parseWithDOM("src/sonnet.xml");
+            } else if (choice.equals("3")) {
+                parseWithStAX("src/sonnet.xml");
             } else {
-                System.out.println("Неверный выбор. Введите 1 или 2.");
+                System.out.println("Неверный выбор. Введите 1, 2 или 3.");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -56,6 +61,47 @@ public class XMLParser {
             }
 
             writeToFile(firstName, lastName, title, linesContent.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // StAX Parser
+    private static void parseWithStAX(String xmlFile) {
+        try {
+            XMLInputFactory factory = XMLInputFactory.newInstance();
+            XMLStreamReader reader = factory.createXMLStreamReader(new FileInputStream(xmlFile));
+
+            String firstName = null;
+            String lastName = null;
+            String title = null;
+            StringBuilder lines = new StringBuilder();
+
+            while (reader.hasNext()) {
+                int event = reader.next();
+
+                switch (event) {
+                    case XMLStreamConstants.START_ELEMENT:
+                        String elementName = reader.getLocalName();
+                        switch (elementName) {
+                            case "firstName":
+                                firstName = reader.getElementText();
+                                break;
+                            case "lastName":
+                                lastName = reader.getElementText();
+                                break;
+                            case "title":
+                                title = reader.getElementText();
+                                break;
+                            case "line":
+                                lines.append(reader.getElementText()).append("\n");
+                                break;
+                        }
+                        break;
+                }
+            }
+
+            writeToFile(firstName, lastName, title, lines.toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
